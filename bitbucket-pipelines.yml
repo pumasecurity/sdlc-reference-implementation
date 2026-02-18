@@ -1,0 +1,184 @@
+# Bitbucket Pipelines configuration for multiple .NET project types
+# Supports: Traditional .NET Framework, SDK-style Framework, and Modern .NET 8
+# Uses self-hosted Windows runners
+#
+# Pipeline Structure:
+#   1. Build - Compile all projects
+#   2. Test & Security Scan (parallel)
+#   3. Code Quality - Upload to SonarCloud
+#   4. Quality Gate Check
+
+image: atlassian/default-image:3
+
+pipelines:
+  pull-requests:
+    '**':  # Triggers on all pull requests
+      - step:
+          name: Build
+          runs-on:
+            - self.hosted
+            - windows
+          script:
+            - echo "=========================================="
+            - echo "Building All Projects"
+            - echo "=========================================="
+            - echo "Branch:" $env:BITBUCKET_BRANCH
+            - echo "PR ID:" $env:BITBUCKET_PR_ID
+            - echo ""
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\build.ps1
+          artifacts:
+            upload:
+              - name: build-output
+                type: shared
+                paths:
+                  - "**/bin/**"
+                  - "**/obj/**"
+      
+      - parallel:
+          - step:
+              name: Test & Coverage
+              runs-on:
+                - self.hosted
+                - windows
+              script:
+                - echo "=========================================="
+                - echo "Running Tests with Coverage"
+                - echo "=========================================="
+                - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\run-tests.ps1
+              artifacts:
+                download: true
+                upload:
+                  - name: test-results
+                    type: shared
+                    paths:
+                      - test-results/**
+          
+          - step:
+              name: Security Scan
+              runs-on:
+                - self.hosted
+                - windows
+              script:
+                - echo "=========================================="
+                - echo "Semgrep Security Analysis"
+                - echo "=========================================="
+                - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\run-semgrep.ps1
+              artifacts:
+                upload:
+                  - name: semgrep-results
+                    type: shared
+                    paths:
+                      - semgrep-results/**
+      
+      - step:
+          name: Code Quality Analysis
+          runs-on:
+            - self.hosted
+            - windows
+          condition:
+            changesets:
+              includePaths:
+                - "**.cs"
+                - "**.csproj"
+          artifacts:
+            download: true
+          script:
+            - echo "=========================================="
+            - echo "Uploading to SonarCloud"
+            - echo "=========================================="
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\upload-to-sonarcloud.ps1
+      
+      - step:
+          name: Quality Gate Check
+          runs-on:
+            - self.hosted
+            - windows
+          artifacts:
+            download: true
+          script:
+            - echo "=========================================="
+            - echo "Checking Quality Gates"
+            - echo "=========================================="
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\check-quality-gates.ps1
+
+  branches:
+    main:
+      - step:
+          name: Build
+          runs-on:
+            - self.hosted
+            - windows
+          script:
+            - echo "=========================================="
+            - echo "Building All Projects (Main Branch)"
+            - echo "=========================================="
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\build.ps1
+          artifacts:
+            upload:
+              - name: build-output
+                type: shared
+                paths:
+                  - "**/bin/**"
+                  - "**/obj/**"
+      
+      - parallel:
+          - step:
+              name: Test & Coverage
+              runs-on:
+                - self.hosted
+                - windows
+              script:
+                - echo "=========================================="
+                - echo "Running Tests with Coverage"
+                - echo "=========================================="
+                - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\run-tests.ps1
+              artifacts:
+                download: true
+                upload:
+                  - name: test-results
+                    type: shared
+                    paths:
+                      - test-results/**
+          
+          - step:
+              name: Security Scan
+              runs-on:
+                - self.hosted
+                - windows
+              script:
+                - echo "=========================================="
+                - echo "Semgrep Security Analysis"
+                - echo "=========================================="
+                - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\run-semgrep.ps1
+              artifacts:
+                upload:
+                  - name: semgrep-results
+                    type: shared
+                    paths:
+                      - semgrep-results/**
+      
+      - step:
+          name: Code Quality Analysis
+          runs-on:
+            - self.hosted
+            - windows
+          artifacts:
+            download: true
+          script:
+            - echo "=========================================="
+            - echo "Uploading to SonarCloud"
+            - echo "=========================================="
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\upload-to-sonarcloud.ps1
+      
+      - step:
+          name: Quality Gate Check
+          runs-on:
+            - self.hosted
+            - windows
+          artifacts:
+            download: true
+          script:
+            - echo "=========================================="
+            - echo "Checking Quality Gates"
+            - echo "=========================================="
+            - powershell -NoProfile -ExecutionPolicy Bypass -File .\pipeline-scripts\check-quality-gates.ps1
