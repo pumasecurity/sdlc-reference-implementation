@@ -77,9 +77,29 @@ if (-not $SkipInstall) {
     }
 }
 
-# Verify Semgrep is available
+# Verify Semgrep is available (re-check after install)
 Write-Host ""
 Write-Host "Verifying Semgrep installation..." -ForegroundColor Yellow
+
+if (-not $semgrepCmd) {
+    # Re-check after pip install — semgrep.exe may now exist in Scripts directory
+    $pythonPath = & $pythonCmd -c "import sys; print(sys.executable)" 2>&1
+    $scriptsPath = Join-Path (Split-Path $pythonPath) "Scripts"
+    $semgrepExe = Join-Path $scriptsPath "semgrep.exe"
+    if (Test-Path $semgrepExe) {
+        $semgrepCmd = $semgrepExe
+        Write-Host "[OK] Found Semgrep after install: $semgrepCmd" -ForegroundColor Green
+    }
+}
+
+if (-not $semgrepCmd) {
+    # Fallback: check if semgrep is on PATH
+    $semgrepOnPath = Get-Command semgrep -ErrorAction SilentlyContinue
+    if ($semgrepOnPath) {
+        $semgrepCmd = $semgrepOnPath.Source
+        Write-Host "[OK] Found Semgrep on PATH: $semgrepCmd" -ForegroundColor Green
+    }
+}
 
 if (-not $semgrepCmd) {
     Write-Host "ERROR: Semgrep not found. Please install with: python -m pip install semgrep" -ForegroundColor Red

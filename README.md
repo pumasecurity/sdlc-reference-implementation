@@ -1,6 +1,6 @@
 # SDLC Reference Implementation
 
-Bitbucket Pipelines reference implementation demonstrating CI/CD for multiple .NET project types with automated testing, code coverage, security scanning, and code quality analysis on self-hosted Windows runners.
+GitHub Actions reference implementation demonstrating CI/CD for multiple .NET project types with automated testing, code coverage, security scanning, and code quality analysis on `windows-latest` runners.
 
 ## Project Types
 
@@ -27,9 +27,9 @@ This repository demonstrates three common .NET project structures:
 
 ## Pipeline Structure
 
-The Bitbucket Pipeline (`bitbucket-pipelines.yml`) runs on self-hosted Windows runners for both pull requests and main branch commits.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on `windows-latest` runners for both pull requests and pushes to main.
 
-### Pipeline Steps
+### Pipeline Jobs
 
 ```
 Build
@@ -48,7 +48,7 @@ Build
 4. **Code Quality Analysis** — Uploads coverage and Semgrep SARIF results to SonarCloud via `dotnet-sonarscanner`
 5. **Quality Gate Check** — Enforces thresholds: test pass rate, coverage minimum (70%), and zero critical Semgrep findings
 
-Steps 2 and 3 run in parallel. Artifacts are shared between steps using Bitbucket's named shared artifacts.
+Jobs 2 and 3 run in parallel. Artifacts are shared between jobs using GitHub Actions upload/download artifact actions.
 
 ## Tools & Technologies
 
@@ -56,7 +56,7 @@ Steps 2 and 3 run in parallel. Artifacts are shared between steps using Bitbucke
 - [MSTest](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-mstest) — Test framework for all three project types
 - [Microsoft.CodeCoverage](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage) — Code coverage data collector (generates `.coverage` files)
 - [dotnet-coverage](https://learn.microsoft.com/en-us/dotnet/core/additional-tools/dotnet-coverage) — CLI tool to collect, merge, and convert coverage across all test runners
-- [JUnitXml.TestLogger](https://github.com/spekt/junit.testlogger) — MSTest logger that outputs JUnit XML for pipeline test result parsing
+- [JUnitXml.TestLogger](https://github.com/spekt/junit.testlogger) — MSTest logger that outputs JUnit XML for test result parsing
 - [VSTest.Console.exe](https://learn.microsoft.com/en-us/visualstudio/test/vstest-console-options) — Test runner for .NET Framework 4.7.2 assemblies (ships with Visual Studio)
 
 ### Security Scanning
@@ -70,32 +70,32 @@ Steps 2 and 3 run in parallel. Artifacts are shared between steps using Bitbucke
 
 ```
 sdlc-reference-implementation/
-├── bitbucket-pipelines.yml                       # CI/CD pipeline configuration
-├── PumaSecurity.SDLC.Web.sln                     # Solution file
+├── .github/workflows/ci.yml                        # CI/CD pipeline configuration
+├── PumaSecurity.SDLC.Web.sln                       # Solution file
 │
-├── pipeline-scripts/                             # All pipeline automation scripts
-│   ├── build.ps1                                 # Build all projects
-│   ├── run-tests.ps1                             # Execute tests with coverage
-│   ├── run-semgrep.ps1                           # Semgrep security scanning
-│   ├── upload-to-sonarcloud.ps1                  # SonarCloud upload (coverage + SARIF)
-│   ├── check-quality-gates.ps1                   # Quality gate enforcement
-│   ├── run-sonar-analysis.ps1                    # Standalone SonarCloud analysis
-│   ├── show-coverage.ps1                         # Display coverage summary
-│   ├── parse-test-results.ps1                    # Parse JUnit results
-│   ├── post-coverage-comment.ps1                 # Post coverage to PR comments
-│   └── coverage.runsettings                      # Coverage configuration
+├── pipeline-scripts/                               # All pipeline automation scripts
+│   ├── build.ps1                                   # Build all projects
+│   ├── run-tests.ps1                               # Execute tests with coverage
+│   ├── run-semgrep.ps1                             # Semgrep security scanning
+│   ├── upload-to-sonarcloud.ps1                    # SonarCloud upload (coverage + SARIF)
+│   ├── check-quality-gates.ps1                     # Quality gate enforcement
+│   ├── run-sonar-analysis.ps1                      # Standalone SonarCloud analysis
+│   ├── show-coverage.ps1                           # Display coverage summary
+│   ├── parse-test-results.ps1                      # Parse JUnit results
+│   ├── post-coverage-comment.ps1                   # Post coverage to PR comments
+│   └── coverage.runsettings                        # Coverage configuration
 │
-├── PumaSecurity.SDLC.Web.NetFramework/           # Traditional .NET Framework MVC app
-├── PumaSecurity.SDLC.Web.NetFramework.Tests/     # Tests for traditional project
+├── PumaSecurity.SDLC.Web.NetFramework/             # Traditional .NET Framework MVC app
+├── PumaSecurity.SDLC.Web.NetFramework.Tests/       # Tests for traditional project
 │
-├── PumaSecurity.SDLC.Web.NetFrameworkSdk/        # SDK-style .NET Framework class library
-├── PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests/  # Tests for SDK-style Framework
+├── PumaSecurity.SDLC.Web.NetFrameworkSdk/          # SDK-style .NET Framework class library
+├── PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests/    # Tests for SDK-style Framework
 │
-├── PumaSecurity.SDLC.Web.Net/                    # Modern .NET 8 class library
-├── PumaSecurity.SDLC.Web.Net.Tests/              # Tests for modern .NET
+├── PumaSecurity.SDLC.Web.Net/                      # Modern .NET 8 class library
+├── PumaSecurity.SDLC.Web.Net.Tests/                # Tests for modern .NET
 │
-├── test-results/                                 # Generated test & coverage output
-└── semgrep-results/                              # Generated Semgrep scan output
+├── test-results/                                   # Generated test & coverage output
+└── semgrep-results/                                # Generated Semgrep scan output
 ```
 
 ## Quick Start
@@ -158,6 +158,12 @@ Enforces quality gates after SonarCloud upload:
 - Checks Cobertura XML for minimum coverage threshold (70%)
 - Fails the build if any gate is not met
 
+### post-coverage-comment.ps1
+Posts coverage and test result summary as a GitHub PR comment:
+- Uses `gh` CLI with `GITHUB_TOKEN` for authentication
+- Shows line and branch coverage percentages
+- Shows test pass/fail counts
+
 ## Code Coverage
 
 Coverage is collected using Microsoft's `dotnet-coverage` tool across all project types:
@@ -190,7 +196,7 @@ Semgrep OSS scans the codebase for security vulnerabilities:
 
 ## Environment Variables
 
-### Required (Bitbucket Repository Variables)
+### Required (GitHub Repository Secrets)
 | Variable | Description |
 |---|---|
 | `SONAR_TOKEN` | SonarCloud authentication token |
@@ -204,14 +210,20 @@ Semgrep OSS scans the codebase for security vulnerabilities:
 
 ## Prerequisites
 
-### Self-Hosted Windows Runner Requirements
-- Windows Server 2019 or later
-- Visual Studio 2022 Build Tools or Professional/Enterprise
-- .NET SDK 8.0 or later
+### GitHub Actions Runner (`windows-latest`)
+The `windows-latest` runner comes pre-installed with:
+- Visual Studio 2022 (MSBuild, VSTest)
+- .NET SDK 8.0
 - .NET Framework 4.7.2 targeting pack
-- Python 3.x (for Semgrep)
-- Git for Windows
-- PowerShell 5.1 or later
+- Python 3.x
+- NuGet CLI
+- Git
+
+The workflow also uses setup actions for explicit version pinning:
+- `actions/setup-dotnet@v4` — .NET 8.x SDK
+- `microsoft/setup-msbuild@v2` — MSBuild
+- `nuget/setup-nuget@v2` — NuGet CLI
+- `actions/setup-python@v5` — Python 3.x
 
 ### Required .NET Global Tools
 ```powershell

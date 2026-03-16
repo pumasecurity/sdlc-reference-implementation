@@ -4,8 +4,8 @@
 param(
     [string]$SonarToken = $env:SONAR_TOKEN,
     [string]$Configuration = "Release",
-    [string]$BranchName = $env:BITBUCKET_BRANCH,
-    [string]$PrKey = $env:BITBUCKET_PR_ID
+    [string]$BranchName = $env:GITHUB_HEAD_REF,
+    [string]$PrKey
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -13,10 +13,18 @@ Write-Host "SonarCloud Analysis" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+# Auto-detect PR number from GitHub Actions environment
+if (-not $PrKey -and $env:GITHUB_REF -match 'refs/pull/(\d+)/merge') {
+    $PrKey = $Matches[1]
+}
+if (-not $BranchName -and $env:GITHUB_REF -match 'refs/heads/(.+)') {
+    $BranchName = $Matches[1]
+}
+
 # Validate SonarCloud token
 if (-not $SonarToken) {
     Write-Host "ERROR: SONAR_TOKEN environment variable not set" -ForegroundColor Red
-    Write-Host "Please set SONAR_TOKEN in Bitbucket Repository Variables" -ForegroundColor Yellow
+    Write-Host "Please set SONAR_TOKEN in GitHub Repository Secrets" -ForegroundColor Yellow
     exit 1
 }
 
