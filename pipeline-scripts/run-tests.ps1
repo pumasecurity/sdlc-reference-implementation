@@ -1,4 +1,4 @@
-# Test script for Bitbucket Pipeline
+# Test script for CI Pipeline (GitHub Actions)
 # This script runs tests for all 3 project types and generates unified test/coverage reports
 
 param(
@@ -286,5 +286,5 @@ Write-Host "  Coverage File:  $ResultsDir\coverage.coverage" -ForegroundColor Gr
 Write-Host ""
 Write-Host "All tests passed successfully!" -ForegroundColor Green
 Write-Host ""
-Write-Host "Note: JUnit XML in '$ResultsDir' directory is automatically detected by Bitbucket Pipelines." -ForegroundColor Cyan
+Write-Host "Note: Test results and coverage are uploaded as GitHub Actions artifacts." -ForegroundColor Cyan
 exit 0

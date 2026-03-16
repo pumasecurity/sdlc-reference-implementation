@@ -9,6 +9,8 @@
     By default, findings are reported but do NOT fail the build. This allows
     results to be uploaded to SonarCloud before the Quality Gate check step
     determines if the build should fail.
+
+    Used by GitHub Actions CI pipeline (windows-latest runner).
 .NOTES
     Requires: Python 3.x with pip
     Optional: SEMGREP_APP_TOKEN environment variable for cloud upload

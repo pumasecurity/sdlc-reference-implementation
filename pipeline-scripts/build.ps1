@@ -1,5 +1,6 @@
-# Build script for Bitbucket Pipeline
+# Build script for CI Pipeline (GitHub Actions)
 # Builds all three project types: Traditional .NET Framework, SDK-style Framework, and Modern .NET
+# Requires: Visual Studio (MSBuild), .NET 8 SDK, NuGet CLI
 
 param(
     [string]$Configuration = "Release"

@@ -1,5 +1,5 @@
 # Parse and display test results from JUnit XML files
-# This script is used by the Bitbucket Pipeline
+# This script is used by the CI Pipeline (GitHub Actions)
 
 param(
     [string]$TestResultsPath = "test-results"
@@ -12,7 +12,7 @@ $junitFile = Join-Path $TestResultsPath "junit.xml"
 
 if (-not (Test-Path $junitFile)) {
     Write-Host "No JUnit XML file found at: $junitFile" -ForegroundColor Yellow
-    Write-Host "Note: Bitbucket Pipelines will automatically parse and display JUnit XML results." -ForegroundColor Cyan
+    Write-Host "Note: Test results are uploaded as GitHub Actions artifacts." -ForegroundColor Cyan
     exit 0
 }
 
@@ -81,12 +81,12 @@ try {
         Write-Host ""
         Write-Host "Tests FAILED!" -ForegroundColor Red
         Write-Host ""
-        Write-Host "Note: Bitbucket Pipelines will display detailed test results automatically." -ForegroundColor Cyan
+        Write-Host "Note: Test results are available in GitHub Actions job summary." -ForegroundColor Cyan
         exit 1
     } else {
         Write-Host "All tests PASSED! ?" -ForegroundColor Green
         Write-Host ""
-        Write-Host "Note: Bitbucket Pipelines will display detailed test results automatically." -ForegroundColor Cyan
+        Write-Host "Note: Test results are available in GitHub Actions job summary." -ForegroundColor Cyan
         exit 0
     }
 }

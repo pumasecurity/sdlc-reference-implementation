@@ -1,6 +1,8 @@
 # Upload existing test results and coverage to SonarCloud
 # This script assumes build and tests have already been run
-# 
+#
+# Used by GitHub Actions CI pipeline (windows-latest runner)
+#
 # Automatically imports:
 #   - Code coverage from test-results/coverage.coverage
 #   - Semgrep security findings from semgrep-results/semgrep.sarif (if available)
@@ -8,9 +10,7 @@
 param(
     [string]$SonarToken = $env:SONAR_TOKEN,
     [string]$ProjectKey = $env:SONAR_PROJECT_KEY,
-    [string]$Organization = $env:SONAR_ORGANIZATION,
-    [string]$BranchName = $env:BITBUCKET_BRANCH,
-    [string]$PrKey = $env:BITBUCKET_PR_ID
+    [string]$Organization = $env:SONAR_ORGANIZATION
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -22,7 +22,7 @@ Write-Host ""
 if (-not $SonarToken) {
     Write-Host "WARNING: SONAR_TOKEN environment variable not set" -ForegroundColor Yellow
     Write-Host "Skipping SonarCloud upload. To enable:" -ForegroundColor Yellow
-    Write-Host "  1. Set SONAR_TOKEN in Bitbucket Repository Variables" -ForegroundColor Gray
+    Write-Host "  1. Set SONAR_TOKEN in GitHub Repository Secrets" -ForegroundColor Gray
     Write-Host "  2. Set SONAR_PROJECT_KEY (e.g., 'your-org_your-project')" -ForegroundColor Gray
     Write-Host "  3. Set SONAR_ORGANIZATION (e.g., 'your-org')" -ForegroundColor Gray
     Write-Host ""
@@ -32,13 +32,13 @@ if (-not $SonarToken) {
 # Validate project configuration
 if (-not $ProjectKey) {
     Write-Host "ERROR: SONAR_PROJECT_KEY environment variable not set" -ForegroundColor Red
-    Write-Host "Please set in Bitbucket Repository Variables" -ForegroundColor Yellow
+    Write-Host "Please set in GitHub Repository Secrets" -ForegroundColor Yellow
     exit 1
 }
 
 if (-not $Organization) {
     Write-Host "ERROR: SONAR_ORGANIZATION environment variable not set" -ForegroundColor Red
-    Write-Host "Please set in Bitbucket Repository Variables" -ForegroundColor Yellow
+    Write-Host "Please set in GitHub Repository Secrets" -ForegroundColor Yellow
     exit 1
 }
 
@@ -48,7 +48,7 @@ $scannerInstalled = dotnet tool list --global | Select-String "dotnet-sonarscann
 if (-not $scannerInstalled) {
     Write-Host "Installing dotnet-sonarscanner..." -ForegroundColor Yellow
     dotnet tool install --global dotnet-sonarscanner
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: Failed to install dotnet-sonarscanner" -ForegroundColor Red
         exit 1
@@ -64,35 +64,13 @@ Write-Host "Project Key: $ProjectKey" -ForegroundColor Gray
 Write-Host "Organization: $Organization" -ForegroundColor Gray
 Write-Host ""
 
-# Resolve artifact paths - Bitbucket self-hosted Windows runners store artifacts
-# in ../artifact/<step-guid>/ rather than in the build directory
-$artifactDir = Join-Path (Split-Path (Get-Location) -Parent) "artifact"
-Write-Host "DEBUG: Artifact directory: $artifactDir" -ForegroundColor Gray
-
-function Find-ArtifactFile {
-    param([string]$RelativePath)
-    
-    # First check the build directory (normal case)
-    if (Test-Path $RelativePath) {
-        return (Resolve-Path $RelativePath).Path
-    }
-    
-    # Then search the artifact directory (self-hosted runner case)
-    if (Test-Path $artifactDir) {
-        $found = Get-ChildItem -Path $artifactDir -Recurse -Filter (Split-Path $RelativePath -Leaf) -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) {
-            Write-Host "  Found artifact at: $($found.FullName)" -ForegroundColor Gray
-            return $found.FullName
-        }
-    }
-    
-    return $null
-}
-
-# Check if test results exist
-$coverageFile = Find-ArtifactFile "test-results\coverage.coverage"
-if (-not $coverageFile) {
-    Write-Host "WARNING: No coverage file found in build or artifact directories." -ForegroundColor Yellow
+# Check if test results exist (GitHub Actions downloads artifacts to specified paths)
+$coverageFile = $null
+if (Test-Path "test-results\coverage.coverage") {
+    $coverageFile = (Resolve-Path "test-results\coverage.coverage").Path
+    Write-Host "Found coverage file: $coverageFile" -ForegroundColor Green
+} else {
+    Write-Host "WARNING: No coverage file found." -ForegroundColor Yellow
     Write-Host "SonarCloud will analyze code quality without coverage metrics." -ForegroundColor Yellow
 }
 
@@ -110,9 +88,9 @@ if ($coverageFile) {
 }
 
 # Check for Semgrep SARIF results
-$semgrepSarif = Find-ArtifactFile "semgrep-results\semgrep.sarif"
-
-if ($semgrepSarif) {
+$semgrepSarif = $null
+if (Test-Path "semgrep-results\semgrep.sarif") {
+    $semgrepSarif = (Resolve-Path "semgrep-results\semgrep.sarif").Path
     $sarifSize = (Get-Item $semgrepSarif).Length
     Write-Host "Found Semgrep SARIF results ($([math]::Round($sarifSize/1KB, 1)) KB)" -ForegroundColor Green
     Write-Host "  Path: $semgrepSarif" -ForegroundColor Gray
@@ -143,15 +121,33 @@ if ($semgrepSarif) {
     $beginArgs += "/d:sonar.sarifReportPaths=$sarifPathForSonar"
 }
 
+# Detect PR vs branch build from GitHub Actions environment
+$prNumber = $null
+$branchName = $null
+
+if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
+    # Extract PR number from GITHUB_REF (refs/pull/<number>/merge)
+    if ($env:GITHUB_REF -match 'refs/pull/(\d+)/merge') {
+        $prNumber = $Matches[1]
+    }
+    $branchName = $env:GITHUB_HEAD_REF
+    $baseBranch = $env:GITHUB_BASE_REF
+} else {
+    # Push event - extract branch name from GITHUB_REF (refs/heads/<branch>)
+    if ($env:GITHUB_REF -match 'refs/heads/(.+)') {
+        $branchName = $Matches[1]
+    }
+}
+
 # Add PR-specific parameters if this is a PR build
-if ($PrKey) {
-    Write-Host "Pull Request Build - PR #$PrKey" -ForegroundColor Cyan
-    $beginArgs += "/d:sonar.pullrequest.key=$PrKey"
-    $beginArgs += "/d:sonar.pullrequest.branch=$BranchName"
-    $beginArgs += "/d:sonar.pullrequest.base=main"
-} elseif ($BranchName -and $BranchName -ne "main") {
-    Write-Host "Branch Build - $BranchName" -ForegroundColor Cyan
-    $beginArgs += "/d:sonar.branch.name=$BranchName"
+if ($prNumber) {
+    Write-Host "Pull Request Build - PR #$prNumber" -ForegroundColor Cyan
+    $beginArgs += "/d:sonar.pullrequest.key=$prNumber"
+    $beginArgs += "/d:sonar.pullrequest.branch=$branchName"
+    $beginArgs += "/d:sonar.pullrequest.base=$baseBranch"
+} elseif ($branchName -and $branchName -ne "main") {
+    Write-Host "Branch Build - $branchName" -ForegroundColor Cyan
+    $beginArgs += "/d:sonar.branch.name=$branchName"
 } else {
     Write-Host "Main Branch Build" -ForegroundColor Cyan
 }
@@ -177,7 +173,7 @@ $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.e
 if (Test-Path $vswhere) {
     $installPath = & $vswhere -latest -requires Microsoft.Component.MSBuild -property installationPath
     $msbuildPath = "$installPath\MSBuild\Current\Bin\MSBuild.exe"
-    
+
     if (Test-Path $msbuildPath) {
         & $msbuildPath PumaSecurity.SDLC.Web.sln /t:Rebuild /p:Configuration=Release /v:quiet /nologo
     }

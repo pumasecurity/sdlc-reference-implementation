@@ -100,9 +100,9 @@ Write-Host "3. Generate HTML Report (optional):" -ForegroundColor White
 Write-Host "   - Install: dotnet tool install -g dotnet-reportgenerator-globaltool" -ForegroundColor Gray
 Write-Host "   - Run: reportgenerator -reports:**\*.cobertura.xml -targetdir:coveragereport -reporttypes:Html" -ForegroundColor Gray
 Write-Host ""
-Write-Host "4. Bitbucket Pipeline:" -ForegroundColor White
-Write-Host "   - Coverage files are stored as artifacts" -ForegroundColor Gray
-Write-Host "   - Download from the pipeline artifacts tab" -ForegroundColor Gray
+Write-Host "4. GitHub Actions:" -ForegroundColor White
+Write-Host "   - Coverage files are stored as workflow artifacts" -ForegroundColor Gray
+Write-Host "   - Download from the Actions tab on the workflow run" -ForegroundColor Gray
 Write-Host "   - Artifacts are retained for 30 days" -ForegroundColor Gray
 Write-Host ""
 
@@ -118,7 +118,7 @@ if ($junitFiles -and $junitFiles.Count -gt 0) {
     foreach ($file in $junitFiles) {
         Write-Host "  ? $($file.Name)" -ForegroundColor Green
         Write-Host "     Location: $($file.FullName)" -ForegroundColor Gray
-        Write-Host "     Note: Automatically displayed in Bitbucket Pipelines Tests tab" -ForegroundColor Cyan
+        Write-Host "     Note: Test results are uploaded as GitHub Actions artifacts" -ForegroundColor Cyan
         Write-Host ""
     }
 }

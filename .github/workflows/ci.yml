@@ -1,0 +1,280 @@
+# GitHub Actions CI/CD pipeline for multiple .NET project types
+# Supports: Traditional .NET Framework 4.7.2, SDK-style Framework, and Modern .NET 8
+# Uses windows-latest runners (VS 2022 pre-installed)
+#
+# Pipeline Structure:
+#   1. Build - Compile all projects
+#   2. Test & Security Scan (parallel)
+#   3. Code Quality - Upload to SonarCloud (conditional on .cs/.csproj changes)
+#   4. Quality Gate Check
+
+name: CI
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: [main]
+
+jobs:
+  # ==========================================================================
+  # Job 1: Build all projects
+  # ==========================================================================
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Build all projects
+        shell: pwsh
+        run: ./pipeline-scripts/build.ps1
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            **/bin/**
+            **/obj/**
+          retention-days: 1
+
+  # ==========================================================================
+  # Job 2: Test & Coverage (parallel with security-scan)
+  # ==========================================================================
+  test:
+    name: Test & Coverage
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+
+      - name: Install dotnet-coverage
+        shell: pwsh
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Run tests with coverage
+        shell: pwsh
+        run: ./pipeline-scripts/run-tests.ps1
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/**
+          retention-days: 30
+
+      - name: Post coverage PR comment
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./pipeline-scripts/post-coverage-comment.ps1
+
+      - name: Publish test results to job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $junitFile = "test-results/junit.xml"
+          $coberturaFile = "test-results/coverage.cobertura.xml"
+
+          $summary = "## Test Results`n`n"
+
+          if (Test-Path $junitFile) {
+            [xml]$junit = Get-Content $junitFile
+            $total = [int]$junit.testsuites.tests
+            $failures = [int]$junit.testsuites.failures
+            $errors = [int]$junit.testsuites.errors
+            $skipped = [int]$junit.testsuites.skipped
+            $passed = $total - $failures - $errors - $skipped
+
+            $summary += "| Metric | Count |`n|--------|-------|`n"
+            $summary += "| Total | $total |`n"
+            $summary += "| Passed | $passed |`n"
+            $summary += "| Failed | $failures |`n"
+            $summary += "| Errors | $errors |`n"
+            if ($skipped -gt 0) { $summary += "| Skipped | $skipped |`n" }
+          } else {
+            $summary += "> No test results found`n"
+          }
+
+          $summary += "`n## Code Coverage`n`n"
+
+          if (Test-Path $coberturaFile) {
+            [xml]$cov = Get-Content $coberturaFile
+            $lineRate = [math]::Round([double]$cov.coverage.'line-rate' * 100, 2)
+            $branchRate = [math]::Round([double]$cov.coverage.'branch-rate' * 100, 2)
+            $linesCovered = $cov.coverage.'lines-covered'
+            $linesValid = $cov.coverage.'lines-valid'
+
+            $summary += "| Metric | Coverage | Details |`n|--------|----------|---------|`n"
+            $summary += "| Lines | **${lineRate}%** | ${linesCovered}/${linesValid} |`n"
+            $summary += "| Branches | **${branchRate}%** | |`n"
+          } else {
+            $summary += "> No coverage data found`n"
+          }
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+  # ==========================================================================
+  # Job 3: Security Scan (parallel with test)
+  # ==========================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Semgrep security scan
+        shell: pwsh
+        run: ./pipeline-scripts/run-semgrep.ps1
+
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results/**
+          retention-days: 30
+
+  # ==========================================================================
+  # Job 4: SonarCloud Analysis (conditional on .cs/.csproj changes)
+  # ==========================================================================
+  sonarcloud:
+    name: Code Quality Analysis
+    runs-on: windows-latest
+    needs: [test, security-scan]
+    if: >-
+      always() &&
+      needs.test.result == 'success' &&
+      needs.security-scan.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for code changes
+        id: changes
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $diff = git diff --name-only origin/${{ github.base_ref }}...HEAD
+          } else {
+            $diff = git diff --name-only HEAD~1 HEAD 2>$null
+            if ($LASTEXITCODE -ne 0) { $diff = "force-run" }
+          }
+          $hasCodeChanges = ($diff | Where-Object { $_ -match '\.(cs|csproj)$' }).Count -gt 0
+          if (-not $hasCodeChanges -and $diff -ne "force-run") {
+            Write-Host "No .cs or .csproj changes detected - skipping SonarCloud"
+            "skip=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          } else {
+            Write-Host "Code changes detected - running SonarCloud analysis"
+            "skip=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+      - name: Setup .NET 8 SDK
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup MSBuild
+        if: steps.changes.outputs.skip != 'true'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        if: steps.changes.outputs.skip != 'true'
+        uses: nuget/setup-nuget@v2
+
+      - name: Setup Java (required by SonarScanner)
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download test results
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+
+      - name: Download Semgrep results
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results
+
+      - name: Upload to SonarCloud
+        if: steps.changes.outputs.skip != 'true'
+        shell: pwsh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        run: ./pipeline-scripts/upload-to-sonarcloud.ps1
+
+  # ==========================================================================
+  # Job 5: Quality Gate Check
+  # ==========================================================================
+  quality-gates:
+    name: Quality Gate Check
+    runs-on: windows-latest
+    needs: [test, security-scan]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+
+      - name: Download Semgrep results
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results
+
+      - name: Check quality gates
+        shell: pwsh
+        run: ./pipeline-scripts/check-quality-gates.ps1
