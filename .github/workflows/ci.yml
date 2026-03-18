@@ -40,7 +40,7 @@ jobs:
 
       - name: Build all projects
         shell: pwsh
-        run: ./pipeline-scripts/build.ps1
+        run: ./build/build.ps1
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -81,7 +81,7 @@ jobs:
 
       - name: Run tests with coverage
         shell: pwsh
-        run: ./pipeline-scripts/run-tests.ps1
+        run: ./build/run-tests.ps1
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./pipeline-scripts/post-coverage-comment.ps1
+        run: ./build/post-coverage-comment.ps1
 
       - name: Publish test results to job summary
         if: always()
@@ -161,7 +161,7 @@ jobs:
 
       - name: Run Semgrep security scan
         shell: pwsh
-        run: ./pipeline-scripts/run-semgrep.ps1
+        run: ./build/run-semgrep.ps1
 
       - name: Upload Semgrep results
         uses: actions/upload-artifact@v4
@@ -249,7 +249,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-        run: ./pipeline-scripts/upload-to-sonarcloud.ps1
+        run: ./build/upload-to-sonarcloud.ps1
 
   # ==========================================================================
   # Job 5: Quality Gate Check
@@ -277,4 +277,4 @@ jobs:
 
       - name: Check quality gates
         shell: pwsh
-        run: ./pipeline-scripts/check-quality-gates.ps1
+        run: ./build/check-quality-gates.ps1

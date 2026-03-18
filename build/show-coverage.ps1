@@ -16,8 +16,8 @@ if (-not (Test-Path $TestResultsPath)) {
     Write-Host "Test results directory not found: $TestResultsPath" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Please run tests first:" -ForegroundColor Gray
-    Write-Host "  .\build.ps1" -ForegroundColor Cyan
-    Write-Host "  .\run-tests.ps1" -ForegroundColor Cyan
+    Write-Host "  .\build\build.ps1" -ForegroundColor Cyan
+    Write-Host "  .\build\run-tests.ps1" -ForegroundColor Cyan
     exit 0
 }
 
@@ -39,7 +39,7 @@ if ($allCoverageFiles.Count -eq 0) {
     Write-Host "  - .coverage (Visual Studio binary format)" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Make sure you ran tests with coverage collection:" -ForegroundColor Gray
-    Write-Host "  .\run-tests.ps1" -ForegroundColor Cyan
+    Write-Host "  .\build\run-tests.ps1" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Check that dotnet CLI is available and coverlet.collector is installed" -ForegroundColor Gray
     exit 0

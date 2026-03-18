@@ -73,7 +73,7 @@ sdlc-reference-implementation/
 ├── .github/workflows/ci.yml                        # CI/CD pipeline configuration
 ├── PumaSecurity.SDLC.Web.sln                       # Solution file
 │
-├── pipeline-scripts/                               # All pipeline automation scripts
+├── build/                                          # All pipeline automation scripts
 │   ├── build.ps1                                   # Build all projects
 │   ├── run-tests.ps1                               # Execute tests with coverage
 │   ├── run-semgrep.ps1                             # Semgrep security scanning
@@ -85,14 +85,15 @@ sdlc-reference-implementation/
 │   ├── post-coverage-comment.ps1                   # Post coverage to PR comments
 │   └── coverage.runsettings                        # Coverage configuration
 │
-├── PumaSecurity.SDLC.Web.NetFramework/             # Traditional .NET Framework MVC app
-├── PumaSecurity.SDLC.Web.NetFramework.Tests/       # Tests for traditional project
+├── src/
+│   ├── PumaSecurity.SDLC.Web.NetFramework/         # Traditional .NET Framework MVC app
+│   ├── PumaSecurity.SDLC.Web.NetFrameworkSdk/      # SDK-style .NET Framework class library
+│   └── PumaSecurity.SDLC.Web.Net/                  # Modern .NET 8 class library
 │
-├── PumaSecurity.SDLC.Web.NetFrameworkSdk/          # SDK-style .NET Framework class library
-├── PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests/    # Tests for SDK-style Framework
-│
-├── PumaSecurity.SDLC.Web.Net/                      # Modern .NET 8 class library
-├── PumaSecurity.SDLC.Web.Net.Tests/                # Tests for modern .NET
+├── tests/
+│   ├── PumaSecurity.SDLC.Web.NetFramework.Tests/   # Tests for traditional project
+│   ├── PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests/ # Tests for SDK-style Framework
+│   └── PumaSecurity.SDLC.Web.Net.Tests/            # Tests for modern .NET
 │
 ├── test-results/                                   # Generated test & coverage output
 └── semgrep-results/                                # Generated Semgrep scan output
@@ -102,22 +103,22 @@ sdlc-reference-implementation/
 
 ### Build All Projects
 ```powershell
-.\pipeline-scripts\build.ps1
+.\build\build.ps1
 ```
 
 ### Run All Tests with Coverage
 ```powershell
-.\pipeline-scripts\run-tests.ps1
+.\build\run-tests.ps1
 ```
 
 ### Run Security Scan
 ```powershell
-.\pipeline-scripts\run-semgrep.ps1
+.\build\run-semgrep.ps1
 ```
 
 ### Show Coverage Report
 ```powershell
-.\pipeline-scripts\show-coverage.ps1
+.\build\show-coverage.ps1
 ```
 
 ## Pipeline Scripts
@@ -188,7 +189,7 @@ Semgrep OSS scans the codebase for security vulnerabilities:
 - `semgrep-results/semgrep.sarif` — SARIF format for SonarCloud import (post-processed for compatibility)
 
 ### Intentional Test Vulnerabilities
-`PumaSecurity.SDLC.Web.Net/UserService.cs` contains intentional vulnerabilities for testing Semgrep detection:
+`src/PumaSecurity.SDLC.Web.Net/UserService.cs` contains intentional vulnerabilities for testing Semgrep detection:
 - SQL injection (string concatenation in SQL command)
 - Hardcoded credentials
 - Weak cryptography (MD5)
@@ -241,25 +242,25 @@ python -m pip install semgrep
 ### Build Individual Projects
 ```powershell
 # Traditional .NET Framework MVC
-msbuild PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj /p:Configuration=Release
+msbuild src\PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj /p:Configuration=Release
 
 # SDK-style .NET Framework
-dotnet build PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj --configuration Release
+dotnet build src\PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj --configuration Release
 
 # Modern .NET 8
-dotnet build PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj --configuration Release
+dotnet build src\PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj --configuration Release
 ```
 
 ### Run Individual Test Projects
 ```powershell
 # Traditional Framework tests (VSTest)
-vstest.console.exe PumaSecurity.SDLC.Web.NetFramework.Tests\bin\Release\net472\PumaSecurity.SDLC.Web.NetFramework.Tests.dll
+vstest.console.exe tests\PumaSecurity.SDLC.Web.NetFramework.Tests\bin\Release\net472\PumaSecurity.SDLC.Web.NetFramework.Tests.dll
 
 # SDK-style Framework tests (VSTest)
-vstest.console.exe PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\Release\net472\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.dll
+vstest.console.exe tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\Release\net472\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.dll
 
 # Modern .NET 8 tests (dotnet test)
-dotnet test PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj --configuration Release
+dotnet test tests\PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj --configuration Release
 ```
 
 ## Troubleshooting

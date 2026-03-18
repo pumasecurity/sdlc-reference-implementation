@@ -21,17 +21,17 @@ if (-not (Test-Path $ResultsDir)) {
 $testProjects = @(
     @{
         Name = "NetFramework.Tests"
-        Assembly = "PumaSecurity.SDLC.Web.NetFramework.Tests\bin\$Configuration\net472\PumaSecurity.SDLC.Web.NetFramework.Tests.dll"
+        Assembly = "tests\PumaSecurity.SDLC.Web.NetFramework.Tests\bin\$Configuration\net472\PumaSecurity.SDLC.Web.NetFramework.Tests.dll"
         Type = "VSTest"
     },
     @{
         Name = "NetFrameworkSdk.Tests"
-        Assembly = "PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\$Configuration\net472\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.dll"
+        Assembly = "tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\$Configuration\net472\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.dll"
         Type = "VSTest"
     },
     @{
         Name = "Net.Tests"
-        Project = "PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj"
+        Project = "tests\PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj"
         Type = "DotNetTest"
     }
 )

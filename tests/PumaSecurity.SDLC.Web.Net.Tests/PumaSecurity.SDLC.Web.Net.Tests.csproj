@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj" />
+    <ProjectReference Include="..\..\src\PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj" />
   </ItemGroup>
 
 </Project>

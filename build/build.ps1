@@ -64,7 +64,7 @@ if (-not (Test-Path $vswhere)) {
                     
                     # Build the project
                     Write-Host "Building NetFramework MVC project..." -ForegroundColor Yellow
-                    & $msbuildPath PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj /p:Configuration=$Configuration /t:Rebuild /v:minimal /nologo
+                    & $msbuildPath src\PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj /p:Configuration=$Configuration /t:Rebuild /v:minimal /nologo
                     
                     if ($LASTEXITCODE -eq 0) {
                         Write-Host "[OK] NetFramework MVC build successful" -ForegroundColor Green
@@ -72,7 +72,7 @@ if (-not (Test-Path $vswhere)) {
                         # Build the test project
                         Write-Host ""
                         Write-Host "Building NetFramework.Tests..." -ForegroundColor Yellow
-                        & $msbuildPath PumaSecurity.SDLC.Web.NetFramework.Tests\PumaSecurity.SDLC.Web.NetFramework.Tests.csproj /p:Configuration=$Configuration /t:Rebuild /v:minimal /nologo
+                        & $msbuildPath tests\PumaSecurity.SDLC.Web.NetFramework.Tests\PumaSecurity.SDLC.Web.NetFramework.Tests.csproj /p:Configuration=$Configuration /t:Rebuild /v:minimal /nologo
                         
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "[OK] NetFramework.Tests build successful" -ForegroundColor Green
@@ -114,7 +114,7 @@ if (-not $dotnetPath) {
     Write-Host "Found dotnet CLI: $($dotnetPath.Path)" -ForegroundColor Green
     Write-Host "Building NetFrameworkSdk library..." -ForegroundColor Yellow
     
-    & dotnet build PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj --configuration $Configuration --nologo
+    & dotnet build src\PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj --configuration $Configuration --nologo
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] NetFrameworkSdk library build successful" -ForegroundColor Green
@@ -125,7 +125,7 @@ if (-not $dotnetPath) {
     
     Write-Host ""
     Write-Host "Building NetFrameworkSdk.Tests..." -ForegroundColor Yellow
-    & dotnet build PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.csproj --configuration $Configuration --nologo
+    & dotnet build tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.csproj --configuration $Configuration --nologo
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] NetFrameworkSdk.Tests build successful" -ForegroundColor Green
@@ -149,7 +149,7 @@ if (-not $dotnetPath) {
     $buildErrors += "dotnet CLI not found for .NET 8"
 } else {
     Write-Host "Building .NET 8 library..." -ForegroundColor Yellow
-    & dotnet build PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj --configuration $Configuration --nologo
+    & dotnet build src\PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj --configuration $Configuration --nologo
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] .NET 8 library build successful" -ForegroundColor Green
@@ -160,7 +160,7 @@ if (-not $dotnetPath) {
     
     Write-Host ""
     Write-Host "Building .NET 8 Tests..." -ForegroundColor Yellow
-    & dotnet build PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj --configuration $Configuration --nologo
+    & dotnet build tests\PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj --configuration $Configuration --nologo
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] .NET 8 Tests build successful" -ForegroundColor Green
@@ -180,13 +180,13 @@ if ($buildErrors.Count -eq 0) {
     Write-Host ""
     Write-Host "Build Artifacts:" -ForegroundColor Yellow
     Write-Host "  Libraries:" -ForegroundColor Cyan
-    Write-Host "    - NetFramework:    PumaSecurity.SDLC.Web.NetFramework\bin\$Configuration\" -ForegroundColor Gray
-    Write-Host "    - NetFrameworkSdk: PumaSecurity.SDLC.Web.NetFrameworkSdk\bin\$Configuration\net472\" -ForegroundColor Gray
-    Write-Host "    - Net:             PumaSecurity.SDLC.Web.Net\bin\$Configuration\net8.0\" -ForegroundColor Gray
+    Write-Host "    - NetFramework:    src\PumaSecurity.SDLC.Web.NetFramework\bin\$Configuration\" -ForegroundColor Gray
+    Write-Host "    - NetFrameworkSdk: src\PumaSecurity.SDLC.Web.NetFrameworkSdk\bin\$Configuration\net472\" -ForegroundColor Gray
+    Write-Host "    - Net:             src\PumaSecurity.SDLC.Web.Net\bin\$Configuration\net8.0\" -ForegroundColor Gray
     Write-Host "  Test Projects:" -ForegroundColor Cyan
-    Write-Host "    - NetFramework.Tests:    PumaSecurity.SDLC.Web.NetFramework.Tests\bin\$Configuration\net472\" -ForegroundColor Gray
-    Write-Host "    - NetFrameworkSdk.Tests: PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\$Configuration\net472\" -ForegroundColor Gray
-    Write-Host "    - Net.Tests:             PumaSecurity.SDLC.Web.Net.Tests\bin\$Configuration\net8.0\" -ForegroundColor Gray
+    Write-Host "    - NetFramework.Tests:    tests\PumaSecurity.SDLC.Web.NetFramework.Tests\bin\$Configuration\net472\" -ForegroundColor Gray
+    Write-Host "    - NetFrameworkSdk.Tests: tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\bin\$Configuration\net472\" -ForegroundColor Gray
+    Write-Host "    - Net.Tests:             tests\PumaSecurity.SDLC.Web.Net.Tests\bin\$Configuration\net8.0\" -ForegroundColor Gray
     exit 0
 } else {
     Write-Host "[ERROR] Build completed with errors:" -ForegroundColor Red

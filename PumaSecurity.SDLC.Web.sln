@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36511.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFramework", "PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj", "{FF517134-C558-40D5-ADD8-90A14A73F120}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFramework", "src\PumaSecurity.SDLC.Web.NetFramework\PumaSecurity.SDLC.Web.NetFramework.csproj", "{FF517134-C558-40D5-ADD8-90A14A73F120}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,15 +11,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFramework.Tests", "PumaSecurity.SDLC.Web.NetFramework.Tests\PumaSecurity.SDLC.Web.NetFramework.Tests.csproj", "{E1FEDDC1-9397-4813-8E84-8732D26E0591}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFramework.Tests", "tests\PumaSecurity.SDLC.Web.NetFramework.Tests\PumaSecurity.SDLC.Web.NetFramework.Tests.csproj", "{E1FEDDC1-9397-4813-8E84-8732D26E0591}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFrameworkSdk", "PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj", "{867E86E5-8256-416D-85D6-C69DAD2604DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFrameworkSdk", "src\PumaSecurity.SDLC.Web.NetFrameworkSdk\PumaSecurity.SDLC.Web.NetFrameworkSdk.csproj", "{867E86E5-8256-416D-85D6-C69DAD2604DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests", "PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.csproj", "{A6EA189E-6118-4AB9-BBF3-DCA5E789F4A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests", "tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests\PumaSecurity.SDLC.Web.NetFrameworkSdk.Tests.csproj", "{A6EA189E-6118-4AB9-BBF3-DCA5E789F4A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.Net", "PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj", "{A8F5267D-7DC5-4AC9-8590-DEE23249AC17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.Net", "src\PumaSecurity.SDLC.Web.Net\PumaSecurity.SDLC.Web.Net.csproj", "{A8F5267D-7DC5-4AC9-8590-DEE23249AC17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.Net.Tests", "PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj", "{C6B401D7-8D11-4C7A-9C7A-C43DF7589404}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PumaSecurity.SDLC.Web.Net.Tests", "tests\PumaSecurity.SDLC.Web.Net.Tests\PumaSecurity.SDLC.Web.Net.Tests.csproj", "{C6B401D7-8D11-4C7A-9C7A-C43DF7589404}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
