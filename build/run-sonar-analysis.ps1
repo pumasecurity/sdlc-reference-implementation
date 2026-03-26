@@ -33,7 +33,7 @@ $scannerInstalled = dotnet tool list --global | Select-String "dotnet-sonarscann
 
 if (-not $scannerInstalled) {
     Write-Host "Installing dotnet-sonarscanner..." -ForegroundColor Yellow
-    dotnet tool install --global dotnet-sonarscanner
+    dotnet tool install --global dotnet-sonarscanner --version 11.2.0
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: Failed to install dotnet-sonarscanner" -ForegroundColor Red

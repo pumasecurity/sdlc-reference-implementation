@@ -38,16 +38,29 @@ if (-not (Test-Path $vswhere)) {
         if (Test-Path $msbuildPath) {
             Write-Host "Found MSBuild at: $msbuildPath" -ForegroundColor Green
             
-            # Find NuGet for package restore
+            # Find NuGet for package restore (pinned version + SHA256 verification)
             $nugetPath = ".\nuget.exe"
+            $nugetVersion = "7.3.0"
+            $nugetExpectedHash = "39b6309e76c832e4de2ac7f86da9a8afaa12bc5b4307ea335e9d69e2d6d1a94a"
             if (-not (Test-Path $nugetPath)) {
-                Write-Host "Downloading NuGet.exe..." -ForegroundColor Yellow
-                $nugetUrl = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
+                Write-Host "Downloading NuGet.exe v$nugetVersion..." -ForegroundColor Yellow
+                $nugetUrl = "https://dist.nuget.org/win-x86-commandline/v$nugetVersion/nuget.exe"
                 try {
                     $ProgressPreference = 'SilentlyContinue'
                     Invoke-WebRequest -Uri $nugetUrl -OutFile $nugetPath -UseBasicParsing
                     $ProgressPreference = 'Continue'
-                    Write-Host "NuGet.exe downloaded" -ForegroundColor Green
+
+                    # Verify SHA256 hash to prevent tampering
+                    $actualHash = (Get-FileHash -Path $nugetPath -Algorithm SHA256).Hash.ToLower()
+                    if ($actualHash -ne $nugetExpectedHash) {
+                        Write-Host "ERROR: NuGet.exe hash mismatch!" -ForegroundColor Red
+                        Write-Host "  Expected: $nugetExpectedHash" -ForegroundColor Red
+                        Write-Host "  Actual:   $actualHash" -ForegroundColor Red
+                        Remove-Item $nugetPath -Force
+                        $buildErrors += "NuGet hash verification failed"
+                    } else {
+                        Write-Host "NuGet.exe v$nugetVersion downloaded and verified (SHA256)" -ForegroundColor Green
+                    }
                 } catch {
                     Write-Host "ERROR: Failed to download NuGet.exe" -ForegroundColor Red
                     $buildErrors += "NuGet download failed"

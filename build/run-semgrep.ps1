@@ -70,7 +70,7 @@ if (-not $pythonCmd) {
 if (-not $SkipInstall) {
     Write-Host ""
     Write-Host "Installing/upgrading Semgrep..." -ForegroundColor Yellow
-    & $pythonCmd -m pip install --upgrade semgrep
+    & $pythonCmd -m pip install semgrep==1.156.0
     if ($LASTEXITCODE -ne 0) {
         Write-Host "WARNING: Failed to install/upgrade Semgrep via pip" -ForegroundColor Yellow
         Write-Host "Attempting to continue with existing installation..." -ForegroundColor Yellow
