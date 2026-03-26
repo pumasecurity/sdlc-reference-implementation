@@ -15,7 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="JUnitXml.TestLogger" Version="4.1.0" />
+    <PackageReference Include="JUnitXml.TestLogger" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.2.9" />
     <PackageReference Include="Microsoft.CodeCoverage" Version="17.12.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
